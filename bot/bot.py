@@ -94,7 +94,19 @@ async def main():
         
         # Устанавливаем webhook
         logger.info(f"🔗 Устанавливаем webhook: {webhook_url}")
-        await bot.set_webhook(webhook_url)
+        try:
+            webhook_info = await bot.get_webhook_info()
+            logger.info(f"📊 Текущий webhook: {webhook_info.url}")
+            
+            if webhook_info.url != webhook_url:
+                logger.info(f"🔄 Обновляем webhook с {webhook_info.url} на {webhook_url}")
+                await bot.set_webhook(webhook_url)
+                logger.info("✅ Webhook установлен успешно")
+            else:
+                logger.info("✅ Webhook уже установлен правильно")
+        except Exception as e:
+            logger.error(f"❌ Ошибка установки webhook: {e}")
+            raise
         
         logger.info("🚀 Бот запущен успешно!")
         
@@ -108,6 +120,16 @@ async def main():
             return web.Response(text="OK", status=200)
         
         app.router.add_get("/health", health_check)
+        
+        # Добавляем тестовый endpoint для проверки webhook
+        async def test_webhook(request):
+            webhook_info = await bot.get_webhook_info()
+            return web.Response(
+                text=f"Webhook URL: {webhook_info.url}\nPending updates: {webhook_info.pending_update_count}",
+                status=200
+            )
+        
+        app.router.add_get("/test-webhook", test_webhook)
         
         # Webhook endpoint
         async def webhook_handler(request):
