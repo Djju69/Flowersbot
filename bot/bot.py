@@ -35,6 +35,8 @@ router = Router()
 async def cmd_start(message: Message):
     """Приветствие и кнопка открытия Mini App"""
     
+    logger.info(f"🎯 Получена команда /start от пользователя {message.from_user.id}")
+    
     webapp_url = os.getenv('WEBAPP_URL', 'https://your-webapp-url.com')
     
     # Inline кнопка с Mini App
@@ -53,11 +55,24 @@ async def cmd_start(message: Message):
 
 Нажмите кнопку ниже чтобы открыть каталог:"""
     
-    await message.answer(
-        text,
-        reply_markup=keyboard,
-        parse_mode='HTML'
-    )
+    try:
+        await message.answer(
+            text,
+            reply_markup=keyboard,
+            parse_mode='HTML'
+        )
+        logger.info(f"✅ Ответ отправлен пользователю {message.from_user.id}")
+    except Exception as e:
+        logger.error(f"❌ Ошибка отправки ответа: {e}")
+
+# Fallback обработчик для всех сообщений
+@router.message()
+async def handle_all_messages(message: Message):
+    """Обработчик для всех остальных сообщений"""
+    logger.info(f"📨 Получено сообщение от {message.from_user.id}: {message.text}")
+    
+    # Простой ответ на любое сообщение
+    await message.answer("Привет! Используйте команду /start для начала работы.")
 
 async def main():
     """Основная функция запуска бота"""
@@ -100,9 +115,15 @@ async def main():
         
         # Webhook endpoint
         async def webhook_handler(request):
-            data = await request.json()
-            await dp.feed_update(bot, data)
-            return web.Response(text="OK")
+            try:
+                data = await request.json()
+                logger.info(f"📨 Получено обновление: {data.get('update_id', 'unknown')}")
+                await dp.feed_update(bot, data)
+                logger.info("✅ Обновление обработано успешно")
+                return web.Response(text="OK")
+            except Exception as e:
+                logger.error(f"❌ Ошибка в webhook handler: {e}")
+                return web.Response(text="ERROR", status=500)
         
         app.router.add_post(webhook_path, webhook_handler)
         
