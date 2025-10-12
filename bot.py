@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'bot'))
 
 # Импортируем и запускаем основной бот
-from bot import main
+from bot.bot import main
 import asyncio
 
 if __name__ == "__main__":
