@@ -39,20 +39,29 @@ async def cmd_start(message: Message):
     logger.info(f"📝 Текст сообщения: {message.text}")
     logger.info(f"👤 Пользователь: {message.from_user.first_name} {message.from_user.last_name}")
     
-    # Пока Mini App не готов, отправляем простое приветствие
+    webapp_url = os.getenv('WEBAPP_URL', 'https://flowersbot-production.up.railway.app/webapp')
+    
+    # Inline кнопка с Mini App
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="🛍 Открыть магазин",
+            web_app=WebAppInfo(url=webapp_url)
+        )]
+    ])
+    
     text = """🌸 <b>Добро пожаловать в «Цветы Нячанг»!</b>
 
 Свежие букеты с доставкой за 1-2 часа 🚚
 📸 Фото перед отправкой
 💳 Удобная оплата
 
-<b>Mini App в разработке...</b>
-Скоро здесь будет каталог цветов! 🌺"""
+Нажмите кнопку ниже чтобы открыть каталог:"""
     
     try:
         logger.info(f"📤 Отправляем ответ пользователю {message.from_user.id}")
         await message.answer(
             text,
+            reply_markup=keyboard,
             parse_mode='HTML'
         )
         logger.info(f"✅ Ответ отправлен пользователю {message.from_user.id}")
@@ -130,6 +139,24 @@ async def main():
             )
         
         app.router.add_get("/test-webhook", test_webhook)
+        
+        # Добавляем endpoint для Mini App
+        async def webapp_handler(request):
+            try:
+                # Читаем index.html из собранных файлов
+                import os
+                webapp_path = os.path.join(os.path.dirname(__file__), '..', 'webapp', 'dist', 'index.html')
+                if os.path.exists(webapp_path):
+                    with open(webapp_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    return web.Response(text=content, content_type='text/html')
+                else:
+                    return web.Response(text="Mini App not found", status=404)
+            except Exception as e:
+                logger.error(f"❌ Ошибка загрузки Mini App: {e}")
+                return web.Response(text="Error loading Mini App", status=500)
+        
+        app.router.add_get("/webapp", webapp_handler)
         
         # Webhook endpoint
         async def webhook_handler(request):
