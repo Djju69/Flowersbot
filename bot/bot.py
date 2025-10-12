@@ -36,6 +36,8 @@ async def cmd_start(message: Message):
     """Приветствие и кнопка открытия Mini App"""
     
     logger.info(f"🎯 Получена команда /start от пользователя {message.from_user.id}")
+    logger.info(f"📝 Текст сообщения: {message.text}")
+    logger.info(f"👤 Пользователь: {message.from_user.first_name} {message.from_user.last_name}")
     
     # Пока Mini App не готов, отправляем простое приветствие
     text = """🌸 <b>Добро пожаловать в «Цветы Нячанг»!</b>
@@ -48,6 +50,7 @@ async def cmd_start(message: Message):
 Скоро здесь будет каталог цветов! 🌺"""
     
     try:
+        logger.info(f"📤 Отправляем ответ пользователю {message.from_user.id}")
         await message.answer(
             text,
             parse_mode='HTML'
@@ -55,6 +58,8 @@ async def cmd_start(message: Message):
         logger.info(f"✅ Ответ отправлен пользователю {message.from_user.id}")
     except Exception as e:
         logger.error(f"❌ Ошибка отправки ответа: {e}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
 
 # Fallback обработчик для всех сообщений
 @router.message()
@@ -109,11 +114,20 @@ async def main():
             try:
                 data = await request.json()
                 logger.info(f"📨 Получено обновление: {data.get('update_id', 'unknown')}")
+                
+                # Проверяем что это валидное обновление от Telegram
+                if 'update_id' not in data:
+                    logger.warning("⚠️ Невалидное обновление от Telegram")
+                    return web.Response(text="INVALID", status=400)
+                
+                # Обрабатываем обновление
                 await dp.feed_update(bot, data)
                 logger.info("✅ Обновление обработано успешно")
                 return web.Response(text="OK")
             except Exception as e:
                 logger.error(f"❌ Ошибка в webhook handler: {e}")
+                import traceback
+                logger.error(f"❌ Traceback: {traceback.format_exc()}")
                 return web.Response(text="ERROR", status=500)
         
         app.router.add_post(webhook_path, webhook_handler)
