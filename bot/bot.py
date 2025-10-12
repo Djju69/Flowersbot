@@ -142,8 +142,12 @@ async def main():
                     logger.warning("⚠️ Невалидное обновление от Telegram")
                     return web.Response(text="INVALID", status=400)
                 
+                # Преобразуем dict в объект Update
+                from aiogram.types import Update
+                update = Update(**data)
+                
                 # Обрабатываем обновление
-                await dp.feed_update(bot, data)
+                await dp.feed_update(bot, update)
                 logger.info("✅ Обновление обработано успешно")
                 return web.Response(text="OK")
             except Exception as e:
