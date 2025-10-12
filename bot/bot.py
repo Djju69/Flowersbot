@@ -37,28 +37,19 @@ async def cmd_start(message: Message):
     
     logger.info(f"🎯 Получена команда /start от пользователя {message.from_user.id}")
     
-    webapp_url = os.getenv('WEBAPP_URL', 'https://your-webapp-url.com')
-    
-    # Inline кнопка с Mini App
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🛍 Открыть магазин",
-            web_app=WebAppInfo(url=webapp_url)
-        )]
-    ])
-    
+    # Пока Mini App не готов, отправляем простое приветствие
     text = """🌸 <b>Добро пожаловать в «Цветы Нячанг»!</b>
 
 Свежие букеты с доставкой за 2-3 часа 🚚
 📸 Фото перед отправкой
 💳 Удобная оплата
 
-Нажмите кнопку ниже чтобы открыть каталог:"""
+<b>Mini App в разработке...</b>
+Скоро здесь будет каталог цветов! 🌺"""
     
     try:
         await message.answer(
             text,
-            reply_markup=keyboard,
             parse_mode='HTML'
         )
         logger.info(f"✅ Ответ отправлен пользователю {message.from_user.id}")
