@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: flowers
+      POSTGRES_USER: flowers_user
+      POSTGRES_PASSWORD: flowers_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend API
+  backend:
+    build: .
+    command: python main.py
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://flowers_user:flowers_password@postgres:5432/flowers
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
+      - ADMIN_IDS=${ADMIN_IDS}
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+    working_dir: /app
+
+  # Telegram Bot
+  bot:
+    build: .
+    command: python bot.py
+    environment:
+      - DATABASE_URL=postgresql://flowers_user:flowers_password@postgres:5432/flowers
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - WEBAPP_URL=${WEBAPP_URL}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+    depends_on:
+      - postgres
+      - backend
+    volumes:
+      - .:/app
+    working_dir: /app
+
+volumes:
+  postgres_data:

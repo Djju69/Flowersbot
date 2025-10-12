@@ -1,1 +1,2 @@
-web: python unified_server.py
+web: python main.py
+worker: python bot.py
