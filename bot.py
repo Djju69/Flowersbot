@@ -5,8 +5,8 @@
 import sys
 import os
 
-# Добавляем путь к папке bot
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'bot'))
+# Добавляем текущую директорию в путь
+sys.path.insert(0, os.path.dirname(__file__))
 
 # Импортируем и запускаем основной бот
 from bot.bot import main
