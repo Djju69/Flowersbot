@@ -1,17 +1,15 @@
 """
-Telegram Bot для магазина цветов "Цветы Нячанг" - Гибридная архитектура
+Telegram Bot для заказа цветов в Нячанге
+Создан по ТЗ - точно как указано в требованиях
 """
-import asyncio
-import logging
 import os
-from aiogram import Bot, Dispatcher, Router
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+import logging
+import asyncio
+from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 from dotenv import load_dotenv
-
-# Импортируем обработчики
-from .handlers import start, orders, reminders, support, admin
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -25,8 +23,6 @@ logger = logging.getLogger(__name__)
 
 # Получаем токен бота
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://flowersbot-production.up.railway.app/webapp')
-
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN не найден в переменных окружения")
 
@@ -38,12 +34,15 @@ async def main():
         storage = MemoryStorage()
         dp = Dispatcher(storage=storage)
         
-        # Регистрируем роутеры
-        dp.include_router(start.router)
-        dp.include_router(orders.router)
-        dp.include_router(reminders.router)
-        dp.include_router(support.router)
-        dp.include_router(admin.router)
+        # Импортируем и регистрируем обработчики
+        from handlers import start_handler
+        
+        # Регистрируем обработчики
+        dp.message.register(start_handler.cmd_start, lambda message: message.text == "/start")
+        dp.message.register(start_handler.shop_button, lambda message: message.text == "🛍 Магазин")
+        dp.message.register(start_handler.repeat_button, lambda message: message.text == "🔁 Повторить")
+        dp.message.register(start_handler.orders_button, lambda message: message.text == "📦 Мои заказы")
+        dp.message.register(start_handler.support_button, lambda message: message.text == "💬 Поддержка")
         
         # Настраиваем webhook для Railway
         webhook_path = "/webhook"
@@ -54,7 +53,7 @@ async def main():
         if railway_domain:
             webhook_url = f"https://{railway_domain}{webhook_path}"
         else:
-            webhook_url = os.getenv("WEBHOOK_URL", f"https://your-domain.railway.app{webhook_path}")
+            webhook_url = os.getenv("WEBHOOK_URL", f"https://flowersbot-production.up.railway.app{webhook_path}")
         
         # Устанавливаем webhook
         logger.info(f"🔗 Устанавливаем webhook: {webhook_url}")
@@ -75,75 +74,33 @@ async def main():
         logger.info("🚀 Бот запущен успешно!")
         
         # Запускаем webhook сервер
-        from aiohttp import web
-        
         app = web.Application()
         
-        # Добавляем health check endpoint для Railway
-        async def health_check(request):
-            return web.Response(text="OK", status=200)
+        # Настраиваем webhook handler
+        webhook_requests_handler = SimpleRequestHandler(
+            dispatcher=dp,
+            bot=bot,
+        )
+        webhook_requests_handler.register(app, path=webhook_path)
         
-        app.router.add_get("/health", health_check)
-        
-        # Добавляем тестовый endpoint для проверки webhook
-        async def test_webhook(request):
-            webhook_info = await bot.get_webhook_info()
-            return web.Response(
-                text=f"Webhook URL: {webhook_info.url}\nPending updates: {webhook_info.pending_update_count}",
-                status=200
-            )
-        
-        app.router.add_get("/test-webhook", test_webhook)
-        
-        # Webhook endpoint
-        async def webhook_handler(request):
-            try:
-                data = await request.json()
-                logger.info(f"📨 Получено обновление: {data.get('update_id', 'unknown')}")
-                
-                # Проверяем что это валидное обновление от Telegram
-                if 'update_id' not in data:
-                    logger.warning("⚠️ Невалидное обновление от Telegram")
-                    return web.Response(text="INVALID", status=400)
-                
-                # Преобразуем dict в объект Update
-                from aiogram.types import Update
-                update = Update(**data)
-                
-                # Обрабатываем обновление
-                await dp.feed_update(bot, update)
-                logger.info("✅ Обновление обработано успешно")
-                return web.Response(text="OK")
-            except Exception as e:
-                logger.error(f"❌ Ошибка в webhook handler: {e}")
-                import traceback
-                logger.error(f"❌ Traceback: {traceback.format_exc()}")
-                return web.Response(text="ERROR", status=500)
-        
-        app.router.add_post(webhook_path, webhook_handler)
+        # Настраиваем приложение
+        setup_application(app, dp, bot=bot)
         
         # Запускаем сервер
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', port)
-        await site.start()
-        
         logger.info(f"🌐 Webhook сервер запущен на порту {port}")
-        
-        # Держим сервер запущенным
-        try:
-            while True:
-                await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            logger.info("🛑 Получен сигнал остановки")
+        await web._run_app(app, host="0.0.0.0", port=port)
         
     except Exception as e:
-        logger.error(f"❌ Ошибка запуска бота: {e}")
+        logger.error(f"❌ Критическая ошибка: {e}")
         raise
     finally:
-        # Закрываем соединения
-        if 'bot' in locals():
-            await bot.session.close()
+        await bot.session.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("🛑 Бот остановлен пользователем")
+    except Exception as e:
+        logger.error(f"❌ Фатальная ошибка: {e}")
+        raise
