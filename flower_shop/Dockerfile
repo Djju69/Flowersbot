@@ -1,12 +1,13 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     gcc \
+    musl-dev \
     postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+    libpq-dev
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
