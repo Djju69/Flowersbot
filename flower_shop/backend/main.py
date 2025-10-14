@@ -4,6 +4,8 @@ FastAPI Backend для магазина цветов "Цветы Нячанг"
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import products, orders
+from models.database import create_tables
+import asyncio
 
 app = FastAPI(title="Flowers Nha Trang API", version="1.0.0")
 
@@ -18,6 +20,11 @@ app.add_middleware(
 # Подключаем роуты
 app.include_router(products.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
+
+@app.on_event("startup")
+async def startup_event():
+    """Создаем таблицы при запуске"""
+    await create_tables()
 
 @app.get("/")
 async def root():

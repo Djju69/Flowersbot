@@ -1,40 +1,35 @@
 """
 API роуты для товаров
 """
-from fastapi import APIRouter, HTTPException
-from sqlalchemy.orm import Session
-from models.database import Product, Base
-from sqlalchemy import create_engine
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from models.database import Product, Base, get_db
 import os
 
 router = APIRouter()
 
-# Подключение к БД
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/flowers')
-engine = create_engine(DATABASE_URL)
-Base.metadata.create_all(bind=engine)
-
-def get_db():
-    db = Session(engine)
-    try:
-        yield db
-    finally:
-        db.close()
+# Создаем таблицы при запуске
+async def create_tables():
+    from models.database import engine, Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 @router.get("/products")
-async def get_products(category: str = None, popular: bool = None):
+async def get_products(category: str = None, popular: bool = None, db: AsyncSession = Depends(get_db)):
     """Получить список товаров"""
-    db = Session(engine)
     try:
-        query = db.query(Product).filter(Product.is_available == True)
+        query = select(Product).where(Product.is_available == True)
         
         if category:
-            query = query.filter(Product.category == category)
+            query = query.where(Product.category == category)
         
         if popular is not None:
-            query = query.filter(Product.is_popular == popular)
+            query = query.where(Product.is_popular == popular)
         
-        products = query.all()
+        result = await db.execute(query)
+        products = result.scalars().all()
+        
         return [
             {
                 "id": p.id,
@@ -47,15 +42,16 @@ async def get_products(category: str = None, popular: bool = None):
             }
             for p in products
         ]
-    finally:
-        db.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/products/{product_id}")
-async def get_product(product_id: int):
+async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
     """Получить товар по ID"""
-    db = Session(engine)
     try:
-        product = db.query(Product).filter(Product.id == product_id).first()
+        result = await db.execute(select(Product).where(Product.id == product_id))
+        product = result.scalar_one_or_none()
+        
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
         
@@ -68,59 +64,60 @@ async def get_product(product_id: int):
             "photo_url": product.photo_url,
             "is_popular": product.is_popular
         }
-    finally:
-        db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/products")
-async def create_product(product_data: dict):
+async def create_product(product_data: dict, db: AsyncSession = Depends(get_db)):
     """Создать товар (для админа)"""
-    db = Session(engine)
     try:
         product = Product(**product_data)
         db.add(product)
-        db.commit()
-        db.refresh(product)
+        await db.commit()
+        await db.refresh(product)
         return {"id": product.id, "message": "Product created"}
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        db.close()
 
 @router.patch("/products/{product_id}")
-async def update_product(product_id: int, data: dict):
+async def update_product(product_id: int, data: dict, db: AsyncSession = Depends(get_db)):
     """Обновить товар"""
-    db = Session(engine)
     try:
-        product = db.query(Product).filter(Product.id == product_id).first()
+        result = await db.execute(select(Product).where(Product.id == product_id))
+        product = result.scalar_one_or_none()
+        
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
         
         for key, value in data.items():
             setattr(product, key, value)
         
-        db.commit()
+        await db.commit()
         return {"message": "Product updated"}
+    except HTTPException:
+        raise
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        db.close()
 
 @router.delete("/products/{product_id}")
-async def delete_product(product_id: int):
+async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
     """Удалить товар"""
-    db = Session(engine)
     try:
-        product = db.query(Product).filter(Product.id == product_id).first()
+        result = await db.execute(select(Product).where(Product.id == product_id))
+        product = result.scalar_one_or_none()
+        
         if not product:
             raise HTTPException(status_code=404, detail="Product not found")
         
-        db.delete(product)
-        db.commit()
+        await db.delete(product)
+        await db.commit()
         return {"message": "Product deleted"}
+    except HTTPException:
+        raise
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        db.close()

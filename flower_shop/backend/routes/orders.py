@@ -1,24 +1,18 @@
 """
 API роуты для заказов
 """
-from fastapi import APIRouter, HTTPException
-from sqlalchemy.orm import Session
-from models.database import Order, OrderItem, Product, Base
-from sqlalchemy import create_engine
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from models.database import Order, OrderItem, Product, Base, get_db
 from utils.telegram_notify import send_order_notification
 import os
 
 router = APIRouter()
 
-# Подключение к БД
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/flowers')
-engine = create_engine(DATABASE_URL)
-Base.metadata.create_all(bind=engine)
-
 @router.post("/orders")
-async def create_order(order_data: dict):
+async def create_order(order_data: dict, db: AsyncSession = Depends(get_db)):
     """Создать заказ"""
-    db = Session(engine)
     try:
         # Создаем заказ
         order = Order(
@@ -39,7 +33,7 @@ async def create_order(order_data: dict):
         )
         
         db.add(order)
-        db.flush()  # Получаем ID заказа
+        await db.flush()  # Получаем ID заказа
         
         # Добавляем товары
         for item in order_data['items']:
@@ -53,7 +47,7 @@ async def create_order(order_data: dict):
             )
             db.add(order_item)
         
-        db.commit()
+        await db.commit()
         
         # Отправляем уведомления
         await send_order_notification(order.id, order_data)
@@ -61,17 +55,19 @@ async def create_order(order_data: dict):
         return {"order_id": order.id, "message": "Order created successfully"}
         
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        db.close()
 
 @router.get("/orders/{telegram_id}")
-async def get_user_orders(telegram_id: int):
+async def get_user_orders(telegram_id: int, db: AsyncSession = Depends(get_db)):
     """Получить заказы пользователя"""
-    db = Session(engine)
     try:
-        orders = db.query(Order).filter(Order.telegram_id == telegram_id).order_by(Order.created_at.desc()).all()
+        result = await db.execute(
+            select(Order)
+            .where(Order.telegram_id == telegram_id)
+            .order_by(Order.created_at.desc())
+        )
+        orders = result.scalars().all()
         
         return [
             {
@@ -93,24 +89,25 @@ async def get_user_orders(telegram_id: int):
             }
             for order in orders
         ]
-    finally:
-        db.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.patch("/orders/{order_id}/status")
-async def update_order_status(order_id: int, status: str):
+async def update_order_status(order_id: int, status: str, db: AsyncSession = Depends(get_db)):
     """Обновить статус заказа (для админа)"""
-    db = Session(engine)
     try:
-        order = db.query(Order).filter(Order.id == order_id).first()
+        result = await db.execute(select(Order).where(Order.id == order_id))
+        order = result.scalar_one_or_none()
+        
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
         
         order.status = status
-        db.commit()
+        await db.commit()
         
         return {"message": "Order status updated"}
+    except HTTPException:
+        raise
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        db.close()

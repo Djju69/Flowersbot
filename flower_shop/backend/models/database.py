@@ -4,9 +4,24 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, sessionmaker
 from datetime import datetime
+import os
 
 Base = declarative_base()
+
+# Подключение к БД
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost:5432/flowers')
+# Конвертируем в async URL если нужно
+if DATABASE_URL.startswith('postgresql://'):
+    DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://')
+
+engine = create_async_engine(DATABASE_URL)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+async def get_db():
+    async with async_session() as session:
+        yield session
 
 class Product(Base):
     __tablename__ = 'products'
