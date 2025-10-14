@@ -15,8 +15,8 @@ async def cmd_start(message: Message):
     
     # Reply keyboard с кнопками по ТЗ
     reply_kb = ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="🔁 Повторить")],
-        [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
+        [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="📦 Мои заказы")],
+        [KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
     # ТОЛЬКО reply keyboard - одно сообщение!
@@ -46,27 +46,6 @@ async def shop_button(message: Message):
         reply_markup=keyboard
     )
 
-async def repeat_button(message: Message):
-    """Кнопка 🔁 Повторить - показывает последний заказ"""
-    logger.info(f"🔁 Запрос повтора заказа от {message.from_user.id}")
-    
-    # TODO: Получить последний заказ из API
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🛍 Повторить заказ #123",
-            web_app=WebAppInfo(url=f"{WEBAPP_URL}?repeat=123")
-        )]
-    ])
-    
-    await message.answer(
-        "🔁 <b>Повторить последний заказ</b>\n\n"
-        "📦 Заказ #123\n"
-        "🌹 Розы премиум\n"
-        "💰 1,200,000 VND\n\n"
-        "Нажмите кнопку чтобы повторить:",
-        reply_markup=keyboard,
-        parse_mode='HTML'
-    )
 
 async def orders_button(message: Message):
     """Кнопка 📦 Мои заказы - история заказов"""

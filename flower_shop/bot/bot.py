@@ -36,11 +36,10 @@ async def main():
         dp = Dispatcher(storage=storage)
         
         # Простая регистрация обработчиков по ТЗ
-        from handlers.start_handler import cmd_start, shop_button, repeat_button, orders_button, support_button
+        from handlers.start_handler import cmd_start, shop_button, orders_button, support_button
         
         dp.message.register(cmd_start, CommandStart())
         dp.message.register(shop_button, F.text == "🛍 Магазин")
-        dp.message.register(repeat_button, F.text == "🔁 Повторить")
         dp.message.register(orders_button, F.text == "📦 Мои заказы")
         dp.message.register(support_button, F.text == "💬 Поддержка")
         
