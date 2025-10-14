@@ -1,1 +1,1 @@
-web: cd flower_shop/backend && python main.py
+web: uvicorn flower_shop.backend.main:app --host 0.0.0.0 --port $PORT
