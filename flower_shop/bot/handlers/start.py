@@ -14,19 +14,11 @@ WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://flowersbot-production.up.railway.a
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
-    """Приветствие + кнопка Mini App"""
+    """Приветствие + кнопки"""
     
     logger.info(f"🎯 Получена команда /start от пользователя {message.from_user.id}")
     
-    # Inline кнопка с Mini App
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🛍 ОТКРЫТЬ МАГАЗИН",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )]
-    ])
-    
-    # Reply-кнопки для дополнительных функций
+    # Reply-кнопки для основных функций
     reply_kb = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="🔁 Повторить")],
         [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
@@ -37,12 +29,19 @@ async def cmd_start(message: Message):
         "Свежие букеты с доставкой за 1-2 часа 🚚\n"
         "📸 Фото перед отправкой\n"
         "💳 Удобная оплата\n\n"
-        "Нажмите кнопку чтобы выбрать букеты:",
+        "Выберите действие:",
         reply_markup=reply_kb,
         parse_mode='HTML'
     )
     
-    # Отправляем отдельно inline кнопку
+    # Отправляем отдельно inline кнопку для магазина
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="🛍 ОТКРЫТЬ МАГАЗИН",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )]
+    ])
+    
     await message.answer(
         "🛍 Открыть магазин:",
         reply_markup=keyboard
@@ -51,6 +50,8 @@ async def cmd_start(message: Message):
 @router.message(F.text == "🛍 Магазин")
 async def open_shop_button(message: Message):
     """Открыть магазин по кнопке"""
+    logger.info(f"🛍 Открытие магазина от {message.from_user.id}")
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
             text="🛍 ОТКРЫТЬ МАГАЗИН",
@@ -63,8 +64,34 @@ async def open_shop_button(message: Message):
         reply_markup=keyboard
     )
 
-# Обработчики для кнопок "🔁 Повторить" и "📦 Мои заказы" 
-# находятся в orders.py чтобы избежать дублирования
+@router.message(F.text == "🔁 Повторить")
+async def repeat_last_order(message: Message):
+    """Повторить последний заказ"""
+    logger.info(f"🔁 Запрос повтора заказа от {message.from_user.id}")
+    
+    await message.answer(
+        "🔁 <b>Повторить последний заказ</b>\n\n"
+        "📦 Заказ #123\n"
+        "🌹 Розы премиум\n"
+        "💰 1,200,000 VND\n\n"
+        "Функция в разработке...",
+        parse_mode='HTML'
+    )
+
+@router.message(F.text == "📦 Мои заказы")
+async def my_orders(message: Message):
+    """История заказов пользователя"""
+    logger.info(f"📦 Запрос истории заказов от {message.from_user.id}")
+    
+    await message.answer(
+        "📦 <b>Ваши заказы:</b>\n\n"
+        "📦 Заказ #123\n"
+        "💰 1,200,000 VND\n"
+        "📅 15.10.2025\n"
+        "Статус: Доставлен\n\n"
+        "Функция в разработке...",
+        parse_mode='HTML'
+    )
 
 @router.message(F.text == "💬 Поддержка")
 async def support(message: Message):
@@ -79,6 +106,3 @@ async def support(message: Message):
         "Или напишите ваш вопрос, и мы ответим в течение 15 минут!",
         parse_mode='HTML'
     )
-
-# Убираем fallback обработчик чтобы не мешать другим обработчикам
-# @router.message() - этот обработчик перехватывал все сообщения!
