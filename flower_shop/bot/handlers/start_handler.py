@@ -19,7 +19,7 @@ async def cmd_start(message: Message):
         [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
-    # Приветственное сообщение
+    # ТОЛЬКО reply keyboard - одно сообщение!
     await message.answer(
         "🌸 <b>Добро пожаловать в Цветы Нячанг!</b>\n\n"
         "Свежие букеты с доставкой за 1-2 часа 🚚\n"
@@ -28,19 +28,6 @@ async def cmd_start(message: Message):
         "Выберите действие:",
         reply_markup=reply_kb,
         parse_mode='HTML'
-    )
-    
-    # Inline кнопка для Mini App
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🛍 ОТКРЫТЬ МАГАЗИН",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )]
-    ])
-    
-    await message.answer(
-        "🛍 Открыть магазин:",
-        reply_markup=keyboard
     )
 
 async def shop_button(message: Message):
