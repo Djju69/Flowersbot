@@ -24,3 +24,4 @@ EXPOSE 8000
 
 # Run the bot
 CMD ["python", "flower_shop/bot/bot.py"]
+
