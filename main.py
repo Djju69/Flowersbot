@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
 """
-Простой запуск backend для совместимости с Railway
+Railway entry point for Flowers Nha Trang API
 """
 import sys
 import os
 
-# Добавляем путь к папке backend
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+# Add flower_shop to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'flower_shop'))
 
-# Импортируем и запускаем FastAPI
+from flower_shop.backend.main import app
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
