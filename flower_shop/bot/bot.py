@@ -35,15 +35,14 @@ async def main():
         storage = MemoryStorage()
         dp = Dispatcher(storage=storage)
         
-        # Импортируем и регистрируем обработчики
-        from handlers import start_handler
+        # Простая регистрация обработчиков по ТЗ
+        from handlers.start_handler import cmd_start, shop_button, repeat_button, orders_button, support_button
         
-        # Регистрируем обработчики правильно
-        dp.message.register(start_handler.cmd_start, CommandStart())
-        dp.message.register(start_handler.shop_button, F.text == "🛍 Магазин")
-        dp.message.register(start_handler.repeat_button, F.text == "🔁 Повторить")
-        dp.message.register(start_handler.orders_button, F.text == "📦 Мои заказы")
-        dp.message.register(start_handler.support_button, F.text == "💬 Поддержка")
+        dp.message.register(cmd_start, CommandStart())
+        dp.message.register(shop_button, F.text == "🛍 Магазин")
+        dp.message.register(repeat_button, F.text == "🔁 Повторить")
+        dp.message.register(orders_button, F.text == "📦 Мои заказы")
+        dp.message.register(support_button, F.text == "💬 Поддержка")
         
         # Настраиваем webhook для Railway
         webhook_path = "/webhook"
