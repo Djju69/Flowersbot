@@ -15,8 +15,8 @@ async def cmd_start(message: Message):
     
     # Reply keyboard с кнопками по ТЗ
     reply_kb = ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="📦 Мои заказы")],
-        [KeyboardButton(text="💬 Поддержка")]
+        [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="🔁 Повторить")],
+        [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
     # ТОЛЬКО reply keyboard - одно сообщение!
