@@ -24,6 +24,14 @@ async def cmd_start(message: Message):
         [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
+    # Объединяем reply keyboard и inline keyboard в одном сообщении
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="🛍 ОТКРЫТЬ МАГАЗИН",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )]
+    ])
+    
     await message.answer(
         "🌸 <b>Добро пожаловать в Цветы Нячанг!</b>\n\n"
         "Свежие букеты с доставкой за 1-2 часа 🚚\n"
@@ -33,14 +41,6 @@ async def cmd_start(message: Message):
         reply_markup=reply_kb,
         parse_mode='HTML'
     )
-    
-    # Отправляем отдельно inline кнопку для магазина
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🛍 ОТКРЫТЬ МАГАЗИН",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )]
-    ])
     
     await message.answer(
         "🛍 Открыть магазин:",
