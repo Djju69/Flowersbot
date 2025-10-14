@@ -57,11 +57,28 @@ async def cmd_start(message: Message):
     
     # Reply-кнопки для дополнительных функций
     reply_kb = ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="🔁 Повторить"), KeyboardButton(text="📦 Мои заказы")],
-        [KeyboardButton(text="💬 Поддержка")]
+        [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="🔁 Повторить")],
+        [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
     await message.answer("Или выберите:", reply_markup=reply_kb)
+
+@router.message(lambda message: message.text == "🛍 Магазин")
+async def shop_button(message: Message):
+    """Кнопка 🛍 Магазин - открывает Mini App"""
+    logger.info(f"🛍 Открытие магазина от {message.from_user.id}")
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="🛍 ОТКРЫТЬ МАГАЗИН",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )]
+    ])
+    
+    await message.answer(
+        "🌸 Выберите букеты:",
+        reply_markup=keyboard
+    )
 
 @router.message(lambda message: message.text == "📦 Мои заказы")
 async def my_orders(message: Message):
