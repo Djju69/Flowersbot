@@ -4,7 +4,8 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
 
@@ -22,6 +23,11 @@ async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False
 async def get_db():
     async with async_session() as session:
         yield session
+
+async def create_tables():
+    """Создание таблиц в базе данных"""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 class Product(Base):
     __tablename__ = 'products'
