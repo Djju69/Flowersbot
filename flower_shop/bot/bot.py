@@ -11,7 +11,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 # Импортируем обработчики
-from handlers import start, orders, reminders, support, admin
+from .handlers import start, orders, reminders, support, admin
 
 # Загружаем переменные окружения
 load_dotenv()
