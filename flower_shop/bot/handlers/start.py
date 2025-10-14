@@ -63,47 +63,8 @@ async def open_shop_button(message: Message):
         reply_markup=keyboard
     )
 
-@router.message(F.text == "🔁 Повторить")
-async def repeat_last_order(message: Message):
-    """Повторить последний заказ"""
-    logger.info(f"🔁 Запрос повтора заказа от {message.from_user.id}")
-    
-    # TODO: Получить последний заказ из API
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(
-            text="🛍 Повторить заказ #123",
-            web_app=WebAppInfo(url=f"{WEBAPP_URL}?repeat=123")
-        )]
-    ])
-    
-    await message.answer(
-        "🔁 <b>Повторить последний заказ</b>\n\n"
-        "📦 Заказ #123\n"
-        "🌹 Розы премиум\n"
-        "💰 1,200,000 VND\n\n"
-        "Нажмите кнопку чтобы повторить:",
-        reply_markup=keyboard,
-        parse_mode='HTML'
-    )
-
-@router.message(F.text == "📦 Мои заказы")
-async def my_orders(message: Message):
-    """История заказов пользователя"""
-    logger.info(f"📦 Запрос истории заказов от {message.from_user.id}")
-    
-    # TODO: Получить заказы из API
-    await message.answer(
-        "📦 <b>Ваши заказы:</b>\n\n"
-        "📦 Заказ #123\n"
-        "💰 1,200,000 VND\n"
-        "📅 15.10.2025\n"
-        "Статус: Доставлен\n\n"
-        "📦 Заказ #122\n"
-        "💰 800,000 VND\n"
-        "📅 10.10.2025\n"
-        "Статус: Доставлен",
-        parse_mode='HTML'
-    )
+# Обработчики для кнопок "🔁 Повторить" и "📦 Мои заказы" 
+# находятся в orders.py чтобы избежать дублирования
 
 @router.message(F.text == "💬 Поддержка")
 async def support(message: Message):
