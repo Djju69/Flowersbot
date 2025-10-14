@@ -38,11 +38,26 @@ async def cmd_start(message: Message):
     
     # Reply-кнопки для дополнительных функций
     reply_kb = ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="🔁 Повторить"), KeyboardButton(text="📦 Мои заказы")],
-        [KeyboardButton(text="🔔 Напоминания"), KeyboardButton(text="💬 Поддержка")]
+        [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="🔁 Повторить")],
+        [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
     await message.answer("Или выберите:", reply_markup=reply_kb)
+
+@router.message(F.text == "🛍 Магазин")
+async def open_shop_button(message: Message):
+    """Открыть магазин по кнопке"""
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text="🛍 ОТКРЫТЬ МАГАЗИН",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )]
+    ])
+    
+    await message.answer(
+        "🌸 Выберите букеты:",
+        reply_markup=keyboard
+    )
 
 @router.message(F.text == "🔁 Повторить")
 async def repeat_last_order(message: Message):
@@ -83,24 +98,6 @@ async def my_orders(message: Message):
         "💰 800,000 VND\n"
         "📅 10.10.2025\n"
         "Статус: Доставлен",
-        parse_mode='HTML'
-    )
-
-@router.message(F.text == "🔔 Напоминания")
-async def reminders(message: Message):
-    """Управление напоминаниями"""
-    logger.info(f"🔔 Запрос напоминаний от {message.from_user.id}")
-    
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="➕ Добавить напоминание", callback_data="add_reminder")],
-        [InlineKeyboardButton(text="📝 Мои напоминания", callback_data="list_reminders")]
-    ])
-    
-    await message.answer(
-        "🔔 <b>Напоминания о важных датах</b>\n\n"
-        "Не забудьте о днях рождения, годовщинах и других важных событиях!\n"
-        "Мы напомним вам заранее, чтобы вы успели заказать букет.",
-        reply_markup=keyboard,
         parse_mode='HTML'
     )
 
