@@ -8,6 +8,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.filters import CommandStart
 from aiohttp import web
 from dotenv import load_dotenv
 
@@ -37,8 +38,8 @@ async def main():
         # Импортируем и регистрируем обработчики
         from handlers import start_handler
         
-        # Регистрируем обработчики
-        dp.message.register(start_handler.cmd_start, lambda message: message.text == "/start")
+        # Регистрируем обработчики правильно
+        dp.message.register(start_handler.cmd_start, CommandStart())
         dp.message.register(start_handler.shop_button, lambda message: message.text == "🛍 Магазин")
         dp.message.register(start_handler.repeat_button, lambda message: message.text == "🔁 Повторить")
         dp.message.register(start_handler.orders_button, lambda message: message.text == "📦 Мои заказы")
