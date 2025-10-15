@@ -4,7 +4,7 @@ API роуты для заказов
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.database import Order, OrderItem, Product, Base, get_db
+from ..models.database import Order, OrderItem, Product, Base, get_db
 from utils.telegram_notify import send_order_notification
 import os
 

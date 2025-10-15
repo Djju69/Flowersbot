@@ -4,7 +4,7 @@ API роуты для товаров
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.database import Product, Base, get_db
+from ..models.database import Product, Base, get_db
 import os
 
 router = APIRouter()
