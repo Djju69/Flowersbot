@@ -75,6 +75,17 @@ async def main():
         
         # Запускаем webhook сервер
         app = web.Application()
+
+        # Диагностический healthcheck для Railway и ручной проверки
+        async def health_check(request: web.Request) -> web.Response:
+            return web.Response(text="OK", status=200)
+        app.router.add_get("/health", health_check)
+
+        # Диагностический эндпоинт для проверки текущего webhook
+        async def test_webhook(request: web.Request) -> web.Response:
+            info = await bot.get_webhook_info()
+            return web.Response(text=f"Webhook URL: {info.url}\nPending: {info.pending_update_count}", status=200)
+        app.router.add_get("/test-webhook", test_webhook)
         
         # Настраиваем webhook handler
         webhook_requests_handler = SimpleRequestHandler(
