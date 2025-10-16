@@ -76,6 +76,19 @@ async def main():
         # Запускаем webhook сервер
         app = web.Application()
 
+        # Логирование всех входящих запросов (диагностика 502)
+        @web.middleware
+        async def log_requests(request, handler):
+            logger.info(f"➡️ {request.method} {request.path}")
+            try:
+                response = await handler(request)
+                logger.info(f"⬅️ {response.status} {request.method} {request.path}")
+                return response
+            except Exception as e:
+                logger.error(f"❌ Middleware error on {request.method} {request.path}: {e}")
+                raise
+        app.middlewares.append(log_requests)
+
         # Диагностический healthcheck для Railway и ручной проверки
         async def health_check(request: web.Request) -> web.Response:
             return web.Response(text="OK", status=200)
@@ -86,6 +99,11 @@ async def main():
             info = await bot.get_webhook_info()
             return web.Response(text=f"Webhook URL: {info.url}\nPending: {info.pending_update_count}", status=200)
         app.router.add_get("/test-webhook", test_webhook)
+
+        # Корневой эндпоинт для простого ответа
+        async def root(request: web.Request) -> web.Response:
+            return web.Response(text="BOT OK", status=200)
+        app.router.add_get("/", root)
         
         # Настраиваем webhook handler
         webhook_requests_handler = SimpleRequestHandler(
