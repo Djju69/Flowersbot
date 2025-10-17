@@ -44,7 +44,7 @@ async def main():
         
         # Настраиваем webhook для Railway
         webhook_path = "/webhook"
-        port = int(os.getenv("PORT", 8000))
+        port = int(os.getenv("PORT", 8080))
         
         # Получаем домен Railway из переменных окружения
         railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
@@ -113,7 +113,7 @@ async def main():
         # Настраиваем приложение
         setup_application(app, dp, bot=bot)
         
-        # Запускаем сервер
+        # Запускаем сервер обычным способом (ожидает $PORT от Railway)
         logger.info(f"🌐 Webhook сервер запущен на порту {port}")
         await web._run_app(app, host="0.0.0.0", port=port)
         
