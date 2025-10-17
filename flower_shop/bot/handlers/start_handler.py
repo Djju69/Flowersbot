@@ -2,24 +2,27 @@
 Обработчики команд бота - точно по ТЗ
 """
 import logging
+from aiogram import Router, F
+from aiogram.filters import CommandStart
 from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 import os
 
 logger = logging.getLogger(__name__)
 
+router = Router()
+
 WEBAPP_URL = os.getenv('WEBAPP_URL', 'https://flowersbot-production.up.railway.app/webapp')
 
+@router.message(CommandStart())
 async def cmd_start(message: Message):
     """Команда /start - точно по ТЗ"""
     logger.info(f"🎯 Получена команда /start от пользователя {message.from_user.id}")
     
-    # Reply keyboard с кнопками по ТЗ
     reply_kb = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text="🛍 Магазин"), KeyboardButton(text="🔁 Повторить")],
         [KeyboardButton(text="📦 Мои заказы"), KeyboardButton(text="💬 Поддержка")]
     ], resize_keyboard=True)
     
-    # ТОЛЬКО reply keyboard - одно сообщение!
     await message.answer(
         "🌸 <b>Добро пожаловать в Цветы Нячанг!</b>\n\n"
         "Свежие букеты с доставкой за 1-2 часа 🚚\n"
@@ -30,6 +33,7 @@ async def cmd_start(message: Message):
         parse_mode='HTML'
     )
 
+@router.message(F.text == "🛍 Магазин")
 async def shop_button(message: Message):
     """Кнопка 🛍 Магазин - открывает Mini App"""
     logger.info(f"🛍 Открытие магазина от {message.from_user.id}")
@@ -46,11 +50,11 @@ async def shop_button(message: Message):
         reply_markup=keyboard
     )
 
+@router.message(F.text == "🔁 Повторить")
 async def repeat_button(message: Message):
     """Кнопка 🔁 Повторить - показывает последний заказ"""
     logger.info(f"🔁 Запрос повтора заказа от {message.from_user.id}")
     
-    # TODO: Получить последний заказ из API
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
             text="🛍 Повторить заказ #123",
@@ -68,11 +72,11 @@ async def repeat_button(message: Message):
         parse_mode='HTML'
     )
 
+@router.message(F.text == "📦 Мои заказы")
 async def orders_button(message: Message):
     """Кнопка 📦 Мои заказы - история заказов"""
     logger.info(f"📦 Запрос истории заказов от {message.from_user.id}")
     
-    # TODO: Получить заказы из API
     await message.answer(
         "📦 <b>Ваши заказы:</b>\n\n"
         "📦 Заказ #123\n"
@@ -86,6 +90,7 @@ async def orders_button(message: Message):
         parse_mode='HTML'
     )
 
+@router.message(F.text == "💬 Поддержка")
 async def support_button(message: Message):
     """Кнопка 💬 Поддержка - контактная информация"""
     logger.info(f"💬 Запрос поддержки от {message.from_user.id}")

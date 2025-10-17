@@ -5,10 +5,9 @@ Telegram Bot для заказа цветов в Нячанге
 import os
 import logging
 import asyncio
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiogram.filters import CommandStart
 from aiohttp import web
 from dotenv import load_dotenv
 
@@ -35,14 +34,9 @@ async def main():
         storage = MemoryStorage()
         dp = Dispatcher(storage=storage)
         
-        # Простая регистрация обработчиков по ТЗ
-        from handlers.start_handler import cmd_start, shop_button, repeat_button, orders_button, support_button
-        
-        dp.message.register(cmd_start, CommandStart())
-        dp.message.register(shop_button, F.text == "🛍 Магазин")
-        dp.message.register(repeat_button, F.text == "🔁 Повторить")
-        dp.message.register(orders_button, F.text == "📦 Мои заказы")
-        dp.message.register(support_button, F.text == "💬 Поддержка")
+        # Регистрация handlers через Router
+        from handlers import start as start
+        dp.include_router(start.router)
         
         # Настраиваем webhook для Railway
         webhook_path = "/webhook"
