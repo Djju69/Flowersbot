@@ -23,8 +23,13 @@ app.include_router(orders.router, prefix="/api")
 
 @app.on_event("startup")
 async def startup_event():
-    """Создаем таблицы при запуске"""
-    await create_tables()
+    """Создаем таблицы при запуске (с защитой от временных сбоев БД)"""
+    try:
+        await create_tables()
+    except Exception as e:
+        # Не роняем приложение, чтобы health отвечал, а API мог подняться после восстановления БД
+        import logging
+        logging.getLogger(__name__).error(f"DB init error (startup skipped): {e}")
 
 @app.get("/")
 async def root():

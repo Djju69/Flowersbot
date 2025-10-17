@@ -14,11 +14,15 @@ from dotenv import load_dotenv
 # Загружаем переменные окружения
 load_dotenv()
 
-# Настройка логирования
+# Настройка логирования (расширенная)
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    force=True,
 )
+# Включаем access-логи aiohttp и подробные логи aiogram
+logging.getLogger("aiohttp.access").setLevel(logging.INFO)
+logging.getLogger("aiogram").setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Получаем токен бота
