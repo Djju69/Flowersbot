@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .routes import products, orders
 from .models.database import create_tables
 import asyncio
+from starlette.middleware.sessions import SessionMiddleware
+import os
 
 app = FastAPI(title="Flowers Nha Trang API", version="1.0.0")
 
@@ -17,9 +19,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Сессии для админ-панели
+SESSION_SECRET = os.getenv("SESSION_SECRET", "change-me-please")
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
+
 # Подключаем роуты
 app.include_router(products.router, prefix="/api")
 app.include_router(orders.router, prefix="/api")
+try:
+    from .admin.routes import router as admin_router
+    app.include_router(admin_router)
+except Exception:
+    # Админ-панель не блокирует API при ошибках импорта
+    pass
 
 @app.on_event("startup")
 async def startup_event():

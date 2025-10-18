@@ -10,3 +10,4 @@ aiohttp==3.9.1
 
 # Bot dependencies
 aiogram==3.3.0
+Jinja2==3.1.4
